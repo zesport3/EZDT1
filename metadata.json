@@ -1,0 +1,8 @@
+{
+  "name": "EZDT1 - Calculadora de Insulina Personalizada",
+  "description": "EZDT1 - Calculadora de doses de insulina personalizada para diabetes baseada estritamente nos parâmetros do plano de tratamento do utilizador.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
