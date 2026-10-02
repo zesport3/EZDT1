@@ -116,7 +116,8 @@ export interface CalculationResult {
 
   // Computed doses
   carbDose: number;
-  correctionDose: number;
+  correctionDose: number; // Dose de correção efetivamente administrada (ex: 10 calculada - 7 ativa = 3 U administrada)
+  rawCorrectionDose?: number; // Dose de correção bruta calculada antes de subtrair insulina ativa (ex: 10 U)
   totalRawDose: number;
   finalRoundedDose: number;
 

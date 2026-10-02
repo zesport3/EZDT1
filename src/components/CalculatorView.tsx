@@ -15,7 +15,8 @@ import {
   AlertTriangle, 
   Save, 
   RotateCcw, 
-  Check 
+  Check,
+  Info
 } from 'lucide-react';
 
 interface CalculatorViewProps {
@@ -315,6 +316,16 @@ export const CalculatorView: React.FC<CalculatorViewProps> = ({
               </>
             )}
           </div>
+
+          {/* Nota clínica sobre insulina ativa (apenas de correção) */}
+          {(calculationResult.estimatedActiveInsulin ?? 0) > 0 && (
+            <div className="bg-sky-50/80 border border-sky-200/80 rounded-xl p-2.5 text-[11px] text-sky-950 leading-relaxed text-left flex items-start gap-2">
+              <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <span>
+                <strong>Nota:</strong> Só a insulina de correção é considerada insulina ativa. A insulina alimentar não é tida em consideração porque já é usada para cobrir os hidratos de carbono ingeridos e não tem potencial para baixar ainda mais a glicemia.
+              </span>
+            </div>
+          )}
 
           {/* Ingerir 12g de carboidratos (apenas depois de calcular) */}
           {(calculationResult.currentGlucose < 70 || calculationResult.hypoCarbsRecommended) && (

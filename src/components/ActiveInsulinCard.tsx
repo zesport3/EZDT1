@@ -138,13 +138,31 @@ export const ActiveInsulinCard: React.FC<ActiveInsulinCardProps> = ({
           <div className="bg-white/80 p-2 rounded-xl border border-sky-100/80 text-[11px] text-slate-600 font-mono flex items-center justify-between gap-2">
             <span className="text-slate-500 truncate">
               {info.isWithinThreeHours
-                ? `${info.lastDose} U × (1 − ${info.elapsedHours} h ÷ 3 h) = ${formatDecimal(info.activeInsulin)} U`
+                ? `Correção (${info.lastDose} U) × (1 − ${info.elapsedHours} h ÷ 3 h) = ${formatDecimal(info.activeInsulin)} U`
                 : 'Tempo decorrido ≥ 3 horas → 0,00 U de insulina ativa'}
             </span>
             <span className="text-[10px] text-slate-400 shrink-0 font-sans italic">
               Informativo
             </span>
           </div>
+
+          {/* Clinical Rule Note */}
+          <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
+            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <span>
+              <strong>Nota clínica:</strong> Só a insulina de correção é considerada insulina ativa. A insulina alimentar não é tida em consideração porque já é usada para cobrir os hidratos de carbono ingeridos e não tem potencial para baixar ainda mais a glicemia.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Case A with Note */}
+      {!info.hasPreviousDose && (
+        <div className="mt-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>
+            <strong>Nota clínica:</strong> Só a insulina de correção é considerada insulina ativa. A insulina alimentar não é tida em consideração porque já é usada para cobrir os hidratos de carbono ingeridos e não tem potencial para baixar ainda mais a glicemia.
+          </span>
         </div>
       )}
     </div>

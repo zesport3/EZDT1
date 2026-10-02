@@ -27,7 +27,6 @@ import { NewEntryModal } from './components/NewEntryModal';
 import { EntryDetailModal } from './components/EntryDetailModal';
 import { EmbedGuideModal } from './components/EmbedGuideModal';
 import { MedicalDisclaimerModal } from './components/MedicalDisclaimerModal';
-import { CompanyLogo } from './components/CompanyLogo';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 
 export default function App() {
@@ -189,25 +188,13 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer with Creator Attribution & Sponsor Advertisement */}
+      {/* Footer with Creator Attribution */}
       <footer className="border-t border-sky-100 bg-white py-4 px-4 text-slate-700 shadow-2xs">
-        <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          
+        <div className="max-w-xl mx-auto flex items-center justify-center text-center">
           {/* Creator Attribution */}
           <div className="text-xs font-medium text-slate-600">
             Criado por: <strong className="text-slate-900 font-bold">José Miguel Fernandes Nave</strong>
           </div>
-
-          {/* Advertisement with Company Emblem */}
-          <div className="flex flex-col sm:items-end gap-1">
-            <span className="text-[9px] uppercase font-bold tracking-widest text-sky-600 self-center sm:self-end">
-              Publicidade
-            </span>
-            <div className="bg-sky-50/60 border border-sky-100 px-3 py-2 rounded-xl text-left shadow-2xs hover:bg-sky-50 transition-colors">
-              <CompanyLogo size={34} showFull={true} />
-            </div>
-          </div>
-
         </div>
       </footer>
 

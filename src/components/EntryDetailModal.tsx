@@ -59,7 +59,7 @@ export const EntryDetailModal: React.FC<EntryDetailModalProps> = ({
                 {entry.carbs}
                 <span className="text-[9px] font-normal leading-none mt-0.5">g</span>
               </div>
-              <span className="text-[10px] text-slate-500 mt-1">Hidratos</span>
+              <span className="text-[10px] text-slate-500 mt-1">Carboidratos</span>
             </div>
 
             {/* Insulin Dose 1 (Meal) */}
@@ -86,7 +86,7 @@ export const EntryDetailModal: React.FC<EntryDetailModalProps> = ({
             <div className="font-bold text-slate-900">Cálculo Matemático Realizado:</div>
             <div className="bg-sky-50/50 p-3 rounded-xl border border-sky-100 space-y-2 font-mono text-[11px] text-slate-700">
               <div>
-                <strong>Hidratos:</strong> {entry.explanation.carbCalculationText}
+                <strong>Carboidratos:</strong> {entry.explanation.carbCalculationText}
               </div>
               <div>
                 <strong>Correção:</strong> {entry.explanation.correctionCalculationText}

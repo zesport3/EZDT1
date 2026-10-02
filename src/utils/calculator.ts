@@ -244,17 +244,29 @@ export function calculateInsulinDose(
   }
 
   const correctionInsulinRounded = Number(correctionInsulinRaw.toFixed(2));
-
-  // 3. Subtotal of carbs + negative/positive correction, then subtract active insulin (IOB)
-  const subtotalRaw = carbInsulinRaw + correctionInsulinRaw;
   const safeActiveInsulin = Math.max(0, activeInsulin || 0);
-  const totalRaw = Math.max(0, subtotalRaw - safeActiveInsulin);
+
+  // Active insulin is strictly subtracted from correction insulin
+  // Rule: "para o inicio apenas vai a insulina administrada isto é: deu 10 de correcao mas tinha ativa 7 vai para a pag inicial 3"
+  let administeredCorrectionRaw = correctionInsulinRaw;
+  if (correctionInsulinRaw > 0) {
+    administeredCorrectionRaw = Math.max(0, correctionInsulinRaw - safeActiveInsulin);
+  }
+  const administeredCorrectionRounded = Number(administeredCorrectionRaw.toFixed(2));
+
+  // 3. Subtotal of carbs + administered correction
+  const totalRaw = Math.max(0, carbInsulinRaw + administeredCorrectionRaw);
   const finalDose = roundToIncrement(totalRaw, increment);
 
   const roundingExplanation =
     increment === 1.0
       ? `Dose = ${totalRaw.toFixed(2)} U → Arredondado a ${increment} U = ${finalDose} U`
       : `Dose = ${totalRaw.toFixed(2)} U → Arredondado a ${increment} U = ${finalDose} U`;
+
+  const explanationCorrectionText =
+    safeActiveInsulin > 0 && correctionInsulinRaw > 0
+      ? `(${input.currentGlucose} - 100) ÷ ${correctionFactor} = +${correctionInsulinRaw.toFixed(2)} U − ${safeActiveInsulin.toFixed(2)} U ativa = +${administeredCorrectionRounded.toFixed(2)} U administrada`
+      : correctionCalculationText;
 
   const explanation: CalculationStepExplanation = {
     carbInsulinRaw,
@@ -263,9 +275,9 @@ export function calculateInsulinDose(
     correctionNeeded,
     correctionType,
     glucoseDiff,
-    correctionInsulinRaw,
-    correctionInsulinRounded,
-    correctionCalculationText,
+    correctionInsulinRaw: administeredCorrectionRaw,
+    correctionInsulinRounded: administeredCorrectionRounded,
+    correctionCalculationText: explanationCorrectionText,
     totalRaw: Number(totalRaw.toFixed(2)),
     finalDose,
     incrementApplied: increment,
@@ -296,7 +308,8 @@ export function calculateInsulinDose(
     appliedIncrement: increment,
     slotName: params.slotName,
     carbDose: carbInsulinRounded,
-    correctionDose: correctionInsulinRounded,
+    correctionDose: administeredCorrectionRounded,
+    rawCorrectionDose: correctionInsulinRounded,
     totalRawDose: Number(totalRaw.toFixed(2)),
     finalRoundedDose: finalDose,
     estimatedActiveInsulin: safeActiveInsulin,

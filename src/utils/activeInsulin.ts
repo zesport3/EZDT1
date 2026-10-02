@@ -1,28 +1,32 @@
 /**
  * Automatic Active Insulin (IOB) Estimator
  * 
+ * Clinical Rule:
+ * "A insulina ativa que vai para o cálculo é apenas a da insulina de correção.
+ *  Só a insulina de correção é considerada insulina ativa. A insulina alimentar não é tida
+ *  em consideração porque já é usada para cobrir os hidratos de carbono ingeridos e não
+ *  tem potencial para baixar ainda mais a glicemia."
+ * 
  * Rules strictly according to specification:
- * 1. Automatically looks up the most recent insulin administration record from history.
- * 2. Compares timestamp of the last record with the calculation time.
+ * 1. Automatically looks up the most recent CORRECTION insulin administration from history (correctionDose > 0).
+ * 2. Compares timestamp of the last correction record with the calculation time.
  * 3. Checks if less than 3 hours have passed.
  * 4. Formula:
- *    Insulina Ativa Estimada = Dose Inicial × (1 − Tempo Decorrido ÷ 3 horas)
- *    Where:
- *      - Dose Inicial = dose do último registo
- *      - Tempo Decorrido = tempo real passado desde o último registo (em horas)
- *      - Duração Total = 3 horas
+ *    Insulina Ativa Estimada = Dose de Correção Inicial × (1 − Tempo Decorrido ÷ 3 horas)
  * 5. If elapsed >= 3 hours: Insulina Ativa Estimada = 0 U
  * 6. Minimum = 0 U (never negative).
- * 7. If no previous dose:
- *    Message: "Não existe um registo anterior de insulina para calcular a insulina ativa."
+ * 7. If no previous correction dose:
  *    Insulina Ativa Estimada = 0 U
  */
 
 import { HistoryEntry } from '../types';
 
+export const ACTIVE_INSULIN_CLINICAL_NOTE =
+  'Só a insulina de correção é considerada insulina ativa. A insulina alimentar não é tida em consideração porque já é usada para cobrir os hidratos de carbono ingeridos e não tem potencial para baixar ainda mais a glicemia.';
+
 export interface ActiveInsulinCalculation {
   hasPreviousDose: boolean;
-  lastDose: number; // Dose Inicial (X U)
+  lastDose: number; // Dose Inicial de Correção (X U)
   lastTimeFormatted: string; // HH:mm
   lastDateFormatted: string; // DD/MM/AAAA
   lastMeal?: string;
@@ -34,11 +38,13 @@ export interface ActiveInsulinCalculation {
   activeInsulinFormatted: string; // "X,XX U"
   isWithinThreeHours: boolean;
   explanationText: string;
+  clinicalNote: string;
   statusMessage?: string;
 }
 
 /**
  * Calculates the estimated active insulin from history automatically.
+ * Strictly considers ONLY correction insulin (correctionDose > 0).
  * 
  * @param history List of history records
  * @param calculationTime Optional time string "HH:mm" specified for the calculation
@@ -49,12 +55,12 @@ export function calculateActiveInsulin(
   calculationTime?: string,
   referenceDate: Date = new Date()
 ): ActiveInsulinCalculation {
-  // 1. Identify the most recent record where insulin was administered (dose > 0)
-  // Ensure we sort chronologically descending by timestamp
-  const entriesWithInsulin = history
+  // 1. Identify records where CORRECTION insulin was administered (correctionDose > 0)
+  // Food insulin (carbDose) covers consumed carbohydrates and is NOT considered active for blood glucose lowering.
+  const entriesWithCorrection = history
     .filter((entry) => {
-      const dose = entry.finalRoundedDose ?? entry.totalRawDose ?? 0;
-      return dose > 0;
+      const correction = entry.correctionDose ?? 0;
+      return correction > 0;
     })
     .sort((a, b) => {
       const timeA = new Date(a.savedAt || a.timestamp).getTime();
@@ -62,8 +68,8 @@ export function calculateActiveInsulin(
       return timeB - timeA;
     });
 
-  // 2. If no prior insulin administration exists in history
-  if (entriesWithInsulin.length === 0) {
+  // 2. If no prior correction insulin administration exists in history
+  if (entriesWithCorrection.length === 0) {
     return {
       hasPreviousDose: false,
       lastDose: 0,
@@ -75,13 +81,15 @@ export function calculateActiveInsulin(
       activeInsulin: 0,
       activeInsulinFormatted: '0,00 U',
       isWithinThreeHours: false,
-      explanationText: 'Não existe um registo anterior de insulina para calcular a insulina ativa.',
-      statusMessage: 'Não existe um registo anterior de insulina para calcular a insulina ativa.',
+      explanationText: 'Não existe um registo anterior de insulina de correção para calcular a insulina ativa.',
+      clinicalNote: ACTIVE_INSULIN_CLINICAL_NOTE,
+      statusMessage: 'Sem insulina de correção prévia ativa.',
     };
   }
 
-  const lastEntry = entriesWithInsulin[0];
-  const initialDose = lastEntry.finalRoundedDose ?? lastEntry.totalRawDose ?? 0;
+  const lastEntry = entriesWithCorrection[0];
+  // Strictly the correction dose
+  const initialDose = Math.max(0, lastEntry.correctionDose || 0);
 
   // 3. Resolve the exact moment of the last administration
   let lastMoment: Date;
@@ -122,7 +130,7 @@ export function calculateActiveInsulin(
   }
 
   // 7. Apply 3-hour rule
-  // Insulina Ativa Estimada = Dose Inicial × (1 − Tempo Decorrido ÷ 3 horas)
+  // Insulina Ativa Estimada = Dose de Correção Inicial × (1 − Tempo Decorrido ÷ 3 horas)
   let activeInsulin = 0;
   const isWithinThreeHours = elapsedHours < 3;
 
@@ -138,8 +146,8 @@ export function calculateActiveInsulin(
   const activeInsulinFormatted = `${String(activeInsulin.toFixed(2)).replace('.', ',')} U`;
 
   const explanationText = isWithinThreeHours
-    ? `Dose Inicial (${initialDose} U) × (1 - ${elapsedHours.toFixed(2)} h ÷ 3 h) = ${activeInsulinFormatted}`
-    : `Passaram mais de 3 horas (${elapsedFormatted}) desde o último registo → 0,00 U de insulina ativa.`;
+    ? `Dose de Correção (${initialDose} U) × (1 - ${elapsedHours.toFixed(2)} h ÷ 3 h) = ${activeInsulinFormatted}`
+    : `Passaram mais de 3 horas (${elapsedFormatted}) desde a última correção → 0,00 U de insulina ativa.`;
 
   return {
     hasPreviousDose: true,
@@ -155,5 +163,6 @@ export function calculateActiveInsulin(
     activeInsulinFormatted,
     isWithinThreeHours,
     explanationText,
+    clinicalNote: ACTIVE_INSULIN_CLINICAL_NOTE,
   };
 }
